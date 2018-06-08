@@ -10,14 +10,13 @@ import org.apache.camel.ProducerTemplate;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @RestController
@@ -64,6 +63,45 @@ public class GameApi implements BaseVersion{
                 )
                 .findFirst()
                 .get();
+    }
+
+
+    @ApiOperation(
+            value = "Find game informations",
+            response = GameDto.class,
+            notes = "This operation finds a game by his id"
+    )
+    @ApiResponses( value = {
+            @ApiResponse(
+                    code = 200,
+                    message = "Succes to find game from database",
+                    response = GameDto.class
+            ),
+            @ApiResponse(
+                    code = 400,
+                    message = "When there is no game with this id at database",
+                    response = Error.class
+            )
+    })
+    @GetMapping(value = "/games/{id}")
+    public GameDto findGameById(@PathVariable Integer id){
+
+        return Stream.of(createRouteHeaders(id))
+                .map(headers -> producerTemplate
+                        .requestBodyAndHeaders(
+                                "direct:findGameById",
+                                null,
+                                headers
+                        ))
+                .map(response -> convertToDto((GameEntity) response))
+                .findFirst()
+                .get();
+    }
+
+    private Map<String, Object> createRouteHeaders(Integer id){
+        Map<String,Object> routeHeaders = new HashMap<>();
+        routeHeaders.put("id", id);
+        return routeHeaders;
     }
 
     private GameEntity convertToEntity(GameDto gameDto) {

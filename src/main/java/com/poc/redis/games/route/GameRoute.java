@@ -2,6 +2,7 @@ package com.poc.redis.games.route;
 
 import com.poc.redis.games.entities.GameEntity;
 import com.poc.redis.games.repository.GameRepository;
+import io.swagger.models.auth.In;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,14 @@ public class GameRoute extends RouteBuilder {
                     .log("Inserting game")
                     .process(this::saveGame)
             .end();
+
+        from("direct:findGameById")
+                .process(this::findGameById)
+                .choice()
+                    .when(this::gameNotExists)
+                    .process(this::setEmptyGameAtBody)
+                .endChoice()
+                .end();
     }
 
     private Boolean gameExists(Exchange exchange) {
@@ -44,5 +53,20 @@ public class GameRoute extends RouteBuilder {
         GameEntity gameEntity = exchange.getIn().getBody(GameEntity.class);
         throw new KeyAlreadyExistsException(
                 String.format("Already existis a game with id %s", gameEntity.getId()));
+    }
+
+    private void findGameById(Exchange exchange){
+        Integer id = exchange.getIn().getHeader("id", Integer.class);
+        GameEntity gameEntity = gameRepository.findOne(id);
+        exchange.getIn().setBody(gameEntity);
+    }
+
+    private Boolean gameNotExists(Exchange exchange){
+        GameEntity gameEntity = (GameEntity) exchange.getIn().getBody();
+        return !Optional.ofNullable(gameEntity).isPresent();
+    }
+
+    private void setEmptyGameAtBody(Exchange exchange){
+        exchange.getIn().setBody(new GameEntity());
     }
 }
