@@ -1,0 +1,16 @@
+server:
+  #contextPath: /api
+  port: 8080
+
+spring:
+  application:
+    name: poc-redis-games
+
+redis:
+ # optional, default: 127.0.0.1
+  url: 127.0.0.1
+  # optional, default: 6379
+  port: 6379
+  # optional, default: null
+  password: null
+

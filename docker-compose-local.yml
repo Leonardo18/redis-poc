@@ -1,0 +1,5 @@
+redis:
+  image: redis
+#  command: ["redis-server", "--appendonly", "yes", "--requirepass", "pass"]
+  ports:
+    - 6379:6379
